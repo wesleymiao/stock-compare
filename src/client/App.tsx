@@ -15,6 +15,7 @@ export default function App() {
   const [stocks, setStocks] = useState<StockEntry[]>([]);
   const [range, setRange] = useState('1y');
   const [mode, setMode] = useState<'price' | 'marketcap'>('price');
+  const [normalized, setNormalized] = useState(true);
 
   const addStock = useCallback((symbol: string, name: string) => {
     setStocks((prev) => {
@@ -52,6 +53,25 @@ export default function App() {
             Market Cap
           </button>
         </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => setNormalized(false)}
+            className={`px-3 py-2 rounded text-sm font-medium ${
+              !normalized ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+            }`}
+          >
+            Absolute
+          </button>
+          <button
+            onClick={() => setNormalized(true)}
+            className={`px-3 py-2 rounded text-sm font-medium ${
+              normalized ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+            }`}
+          >
+            Normalized %
+          </button>
+        </div>
       </div>
 
       <TimeSelector range={range} onChange={setRange} />
@@ -80,7 +100,7 @@ export default function App() {
           <p className="text-slate-400 text-lg">Search and add stocks to compare</p>
         </div>
       ) : (
-        <StockChart stocks={stocks} range={range} mode={mode} />
+        <StockChart stocks={stocks} range={range} mode={mode} normalized={normalized} />
       )}
     </div>
   );

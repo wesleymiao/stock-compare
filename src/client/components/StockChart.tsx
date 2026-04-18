@@ -6,6 +6,7 @@ interface Props {
   stocks: StockEntry[];
   range: string;
   mode: 'price' | 'marketcap';
+  normalized: boolean;
 }
 
 interface StockData {
@@ -15,7 +16,7 @@ interface StockData {
   data: { date: string; close: number; volume: number }[];
 }
 
-export default function StockChart({ stocks, range, mode }: Props) {
+export default function StockChart({ stocks, range, mode, normalized }: Props) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
@@ -104,7 +105,7 @@ export default function StockChart({ stocks, range, mode }: Props) {
     });
 
     // Determine if we should normalize (percentage mode when comparing)
-    const normalize = stocks.length > 1;
+    const normalize = normalized;
 
     stocks.forEach((stock) => {
       const stockData = dataCache.get(stock.symbol);
@@ -172,7 +173,7 @@ export default function StockChart({ stocks, range, mode }: Props) {
     });
 
     chart.timeScale().fitContent();
-  }, [dataCache, stocks, mode]);
+  }, [dataCache, stocks, mode, normalized]);
 
   return (
     <div className="relative">
@@ -182,9 +183,9 @@ export default function StockChart({ stocks, range, mode }: Props) {
         </div>
       )}
       <div ref={chartContainerRef} className="rounded-lg overflow-hidden" />
-      {stocks.length > 1 && (
+      {normalized && (
         <p className="text-xs text-slate-500 mt-2">
-          * Showing percentage change (normalized) for comparison
+          * Showing percentage change (normalized)
         </p>
       )}
     </div>
