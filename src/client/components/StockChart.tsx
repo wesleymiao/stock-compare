@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, IChartApi, ISeriesApi, LineData, Time } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi, ISeriesApi, LineData, Time, LineStyle } from 'lightweight-charts';
 import type { StockEntry } from '../App';
 
 interface Props {
@@ -152,9 +152,11 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
         }
       }
 
+      const isBenchmark = stock.isBenchmark === true;
       const series = chart.addLineSeries({
         color: stock.color,
-        lineWidth: 2,
+        lineWidth: isBenchmark ? 1 : 2,
+        lineStyle: isBenchmark ? LineStyle.Dashed : LineStyle.Solid,
         title: stock.symbol,
         priceFormat: normalize
           ? { type: 'custom', formatter: (v: number) => v.toFixed(2) + '%' }

@@ -7,11 +7,13 @@ export interface StockEntry {
   symbol: string;
   name: string;
   color: string;
+  isBenchmark?: boolean;
 }
 
 const COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#ec4899', '#14b8a6', '#f97316'];
 
 const MAG7: StockEntry[] = [
+  { symbol: '^GSPC', name: 'S&P 500', color: '#ffffff', isBenchmark: true },
   { symbol: 'AAPL', name: 'Apple', color: COLORS[0] },
   { symbol: 'MSFT', name: 'Microsoft', color: COLORS[1] },
   { symbol: 'GOOGL', name: 'Alphabet', color: COLORS[2] },
@@ -92,9 +94,13 @@ export default function App() {
           <span
             key={s.symbol}
             className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium"
-            style={{ backgroundColor: s.color + '22', color: s.color, border: `1px solid ${s.color}` }}
+            style={{
+              backgroundColor: s.isBenchmark ? '#ffffff11' : s.color + '22',
+              color: s.color,
+              border: `1px ${s.isBenchmark ? 'dashed' : 'solid'} ${s.color}`,
+            }}
           >
-            {s.symbol}
+            {s.isBenchmark ? `📊 ${s.symbol}` : s.symbol}
             <button
               onClick={() => removeStock(s.symbol)}
               className="ml-1 hover:opacity-70 text-lg leading-none"
