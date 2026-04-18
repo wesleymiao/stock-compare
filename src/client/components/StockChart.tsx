@@ -155,7 +155,7 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
       const isBenchmark = stock.isBenchmark === true;
       const series = chart.addLineSeries({
         color: stock.color,
-        lineWidth: isBenchmark ? 1 : 2,
+        lineWidth: 2,
         lineStyle: isBenchmark ? LineStyle.Dashed : LineStyle.Solid,
         title: stock.symbol,
         priceFormat: normalize
