@@ -6,12 +6,40 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const YF_BASE = 'https://query1.finance.yahoo.com';
+const YF_BASE = 'https://query2.finance.yahoo.com';
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
-async function yfFetch(url: string) {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0' },
+// Yahoo Finance crumb/cookie management
+let yfCookie = '';
+let yfCrumb = '';
+let crumbExpiry = 0;
+
+async function refreshCrumb() {
+  if (Date.now() < crumbExpiry && yfCrumb) return;
+  // Get cookie
+  const cookieRes = await fetch('https://fc.yahoo.com', {
+    headers: { 'User-Agent': UA },
+    redirect: 'manual',
   });
+  const setCookies = cookieRes.headers.getSetCookie?.() || [];
+  yfCookie = setCookies.map((c: string) => c.split(';')[0]).join('; ');
+
+  // Get crumb
+  const crumbRes = await fetch(`${YF_BASE}/v1/test/getcrumb`, {
+    headers: { 'User-Agent': UA, Cookie: yfCookie },
+  });
+  yfCrumb = await crumbRes.text();
+  crumbExpiry = Date.now() + 30 * 60 * 1000; // 30 min
+}
+
+async function yfFetch(url: string, needsCrumb = false) {
+  const headers: Record<string, string> = { 'User-Agent': UA };
+  if (needsCrumb) {
+    await refreshCrumb();
+    headers['Cookie'] = yfCookie;
+    url += (url.includes('?') ? '&' : '?') + `crumb=${encodeURIComponent(yfCrumb)}`;
+  }
+  const res = await fetch(url, { headers });
   if (!res.ok) throw new Error(`Yahoo Finance error: ${res.status}`);
   return res.json();
 }
@@ -41,28 +69,6 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-// Get quote info
-app.get('/api/quote', async (req, res) => {
-  try {
-    const symbol = req.query.symbol as string;
-    if (!symbol) return res.status(400).json({ error: 'symbol required' });
-    const data = await yfFetch(
-      `${YF_BASE}/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`
-    );
-    const q = data.quoteResponse?.result?.[0];
-    if (!q) return res.status(404).json({ error: 'not found' });
-    res.json({
-      symbol: q.symbol,
-      name: q.shortName || q.longName || q.symbol,
-      price: q.regularMarketPrice,
-      marketCap: q.marketCap,
-      currency: q.currency,
-    });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 // Get historical data
 app.get('/api/history', async (req, res) => {
   try {
@@ -81,11 +87,18 @@ app.get('/api/history', async (req, res) => {
     };
     const interval = intervalMap[range] || '1d';
 
-    const data = await yfFetch(
-      `${YF_BASE}/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`
-    );
+    // Fetch chart data and quote data in parallel
+    const [chartData, quoteData] = await Promise.all([
+      yfFetch(
+        `${YF_BASE}/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`
+      ),
+      yfFetch(
+        `${YF_BASE}/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`,
+        true // needs crumb
+      ).catch(() => null),
+    ]);
 
-    const result = data.chart?.result?.[0];
+    const result = chartData.chart?.result?.[0];
     if (!result) return res.status(404).json({ error: 'no data' });
 
     const timestamps = result.timestamp || [];
@@ -98,22 +111,14 @@ app.get('/api/history', async (req, res) => {
       volume: quotes.volume?.[i],
     })).filter((d: any) => d.close != null);
 
-    // Get shares outstanding from meta or separate quote call
-    let sharesOutstanding = 0;
-    try {
-      const quoteData = await yfFetch(
-        `${YF_BASE}/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`
-      );
-      const q = quoteData.quoteResponse?.result?.[0];
-      sharesOutstanding = q?.sharesOutstanding || 0;
-    } catch {}
+    const q = quoteData?.quoteResponse?.result?.[0];
 
     res.json({
       symbol: meta.symbol || symbol,
-      name: meta.shortName || meta.longName || symbol,
+      name: q?.shortName || q?.longName || meta.longName || symbol,
       currency: meta.currency,
-      marketCap: meta.marketCap,
-      sharesOutstanding,
+      marketCap: q?.marketCap || 0,
+      sharesOutstanding: q?.sharesOutstanding || 0,
       data: history,
     });
   } catch (e: any) {
