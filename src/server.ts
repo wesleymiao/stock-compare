@@ -16,20 +16,34 @@ let crumbExpiry = 0;
 
 async function refreshCrumb() {
   if (Date.now() < crumbExpiry && yfCrumb) return;
-  // Get cookie
-  const cookieRes = await fetch('https://fc.yahoo.com', {
-    headers: { 'User-Agent': UA },
-    redirect: 'manual',
-  });
-  const setCookies = cookieRes.headers.getSetCookie?.() || [];
-  yfCookie = setCookies.map((c: string) => c.split(';')[0]).join('; ');
+  try {
+    // Get cookie from Yahoo
+    const cookieRes = await fetch('https://fc.yahoo.com', {
+      headers: { 'User-Agent': UA },
+      redirect: 'manual',
+    });
+    // Try multiple methods to extract cookies
+    const cookies: string[] = [];
+    if (typeof cookieRes.headers.getSetCookie === 'function') {
+      cookies.push(...cookieRes.headers.getSetCookie());
+    } else {
+      // Fallback: raw header
+      const raw = cookieRes.headers.get('set-cookie');
+      if (raw) cookies.push(...raw.split(/,(?=[^ ])/));
+    }
+    yfCookie = cookies.map((c: string) => c.split(';')[0]).join('; ');
+    console.log(`[YF] Got ${cookies.length} cookies`);
 
-  // Get crumb
-  const crumbRes = await fetch(`${YF_BASE}/v1/test/getcrumb`, {
-    headers: { 'User-Agent': UA, Cookie: yfCookie },
-  });
-  yfCrumb = await crumbRes.text();
-  crumbExpiry = Date.now() + 30 * 60 * 1000; // 30 min
+    // Get crumb
+    const crumbRes = await fetch(`${YF_BASE}/v1/test/getcrumb`, {
+      headers: { 'User-Agent': UA, Cookie: yfCookie },
+    });
+    yfCrumb = await crumbRes.text();
+    console.log(`[YF] Got crumb: ${yfCrumb.substring(0, 8)}...`);
+    crumbExpiry = Date.now() + 30 * 60 * 1000; // 30 min
+  } catch (e) {
+    console.error('[YF] Failed to refresh crumb:', e);
+  }
 }
 
 async function yfFetch(url: string, needsCrumb = false) {
@@ -95,7 +109,7 @@ app.get('/api/history', async (req, res) => {
       yfFetch(
         `${YF_BASE}/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`,
         true // needs crumb
-      ).catch(() => null),
+      ).catch((e) => { console.error('[YF] Quote fetch failed:', e.message); return null; }),
     ]);
 
     const result = chartData.chart?.result?.[0];
