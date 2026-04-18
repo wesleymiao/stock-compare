@@ -25,7 +25,7 @@ const MAG7: StockEntry[] = [
 
 export default function App() {
   const [stocks, setStocks] = useState<StockEntry[]>(MAG7);
-  const [range, setRange] = useState('1mo');
+  const [range, setRange] = useState('3mo');
   const [mode, setMode] = useState<'price' | 'marketcap'>('price');
   const [normalized, setNormalized] = useState(true);
 
