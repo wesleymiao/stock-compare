@@ -141,6 +141,28 @@ app.get('/api/history', async (req, res) => {
 });
 
 // SPA fallback
+app.get('/api/debug-crumb', async (req, res) => {
+  try {
+    crumbExpiry = 0; // force refresh
+    await refreshCrumb();
+    const testRes = await fetch(`${YF_BASE}/v7/finance/quote?symbols=AAPL&crumb=${encodeURIComponent(yfCrumb)}`, {
+      headers: { 'User-Agent': UA, Cookie: yfCookie },
+    });
+    const body = await testRes.json();
+    const q = body?.quoteResponse?.result?.[0];
+    res.json({
+      crumb: yfCrumb ? yfCrumb.substring(0, 8) + '...' : 'EMPTY',
+      cookieLen: yfCookie.length,
+      quoteStatus: testRes.status,
+      marketCap: q?.marketCap,
+      shares: q?.sharesOutstanding,
+      error: body?.quoteResponse?.error || body?.finance?.error,
+    });
+  } catch (e: any) {
+    res.json({ error: e.message });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
