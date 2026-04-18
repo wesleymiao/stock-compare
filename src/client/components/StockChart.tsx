@@ -13,6 +13,7 @@ interface StockData {
   symbol: string;
   name: string;
   sharesOutstanding: number;
+  marketCap: number;
   data: { date: string; close: number; volume: number }[];
 }
 
@@ -114,19 +115,20 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
       let lineData: LineData[];
       const rawData = stockData.data;
 
-      if (mode === 'marketcap' && stockData.sharesOutstanding) {
-        // Market cap = close price * shares outstanding
-        const shares = stockData.sharesOutstanding;
+      if (mode === 'marketcap' && stockData.marketCap) {
+        // Use actual market cap and scale historically by price ratio
+        const currentPrice = rawData[rawData.length - 1].close;
+        const currentMarketCap = stockData.marketCap;
         if (normalize) {
-          const baseVal = rawData[0].close * shares;
+          const basePrice = rawData[0].close;
           lineData = rawData.map((d) => ({
             time: d.date.split('T')[0] as Time,
-            value: ((d.close * shares - baseVal) / baseVal) * 100,
+            value: ((d.close - basePrice) / basePrice) * 100,
           }));
         } else {
           lineData = rawData.map((d) => ({
             time: d.date.split('T')[0] as Time,
-            value: (d.close * shares) / 1e9, // billions
+            value: (currentMarketCap * (d.close / currentPrice)) / 1e9, // billions
           }));
         }
       } else {
