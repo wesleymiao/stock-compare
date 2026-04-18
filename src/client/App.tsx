@@ -11,8 +11,18 @@ export interface StockEntry {
 
 const COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#ec4899', '#14b8a6', '#f97316'];
 
+const MAG7: StockEntry[] = [
+  { symbol: 'AAPL', name: 'Apple', color: COLORS[0] },
+  { symbol: 'MSFT', name: 'Microsoft', color: COLORS[1] },
+  { symbol: 'GOOGL', name: 'Alphabet', color: COLORS[2] },
+  { symbol: 'AMZN', name: 'Amazon', color: COLORS[3] },
+  { symbol: 'NVDA', name: 'NVIDIA', color: COLORS[4] },
+  { symbol: 'META', name: 'Meta', color: COLORS[5] },
+  { symbol: 'TSLA', name: 'Tesla', color: COLORS[6] },
+];
+
 export default function App() {
-  const [stocks, setStocks] = useState<StockEntry[]>([]);
+  const [stocks, setStocks] = useState<StockEntry[]>(MAG7);
   const [range, setRange] = useState('1y');
   const [mode, setMode] = useState<'price' | 'marketcap'>('price');
   const [normalized, setNormalized] = useState(true);
