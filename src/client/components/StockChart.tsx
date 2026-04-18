@@ -97,16 +97,23 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
     const chart = chartRef.current;
     if (!chart) return;
 
-    // Remove old series
-    seriesRef.current.forEach((series, symbol) => {
-      if (!stocks.find((s) => s.symbol === symbol)) {
-        chart.removeSeries(series);
-        seriesRef.current.delete(symbol);
-      }
+    const isIntraday = range === '1d' || range === '5d';
+
+    // Remove all series and recreate (needed when switching between intraday/daily time formats)
+    seriesRef.current.forEach((series) => {
+      chart.removeSeries(series);
     });
+    seriesRef.current.clear();
 
     // Determine if we should normalize (percentage mode when comparing)
     const normalize = normalized;
+
+    const toTime = (dateStr: string): Time => {
+      if (isIntraday) {
+        return Math.floor(new Date(dateStr).getTime() / 1000) as unknown as Time;
+      }
+      return dateStr.split('T')[0] as Time;
+    };
 
     stocks.forEach((stock) => {
       const stockData = dataCache.get(stock.symbol);
@@ -116,66 +123,51 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
       const rawData = stockData.data;
 
       if (mode === 'marketcap' && stockData.marketCap) {
-        // Use actual market cap and scale historically by price ratio
         const currentPrice = rawData[rawData.length - 1].close;
         const currentMarketCap = stockData.marketCap;
         if (normalize) {
           const basePrice = rawData[0].close;
           lineData = rawData.map((d) => ({
-            time: d.date.split('T')[0] as Time,
+            time: toTime(d.date),
             value: ((d.close - basePrice) / basePrice) * 100,
           }));
         } else {
           lineData = rawData.map((d) => ({
-            time: d.date.split('T')[0] as Time,
-            value: (currentMarketCap * (d.close / currentPrice)) / 1e9, // billions
+            time: toTime(d.date),
+            value: (currentMarketCap * (d.close / currentPrice)) / 1e9,
           }));
         }
       } else {
-        // Price mode
         if (normalize) {
           const basePrice = rawData[0].close;
           lineData = rawData.map((d) => ({
-            time: d.date.split('T')[0] as Time,
+            time: toTime(d.date),
             value: ((d.close - basePrice) / basePrice) * 100,
           }));
         } else {
           lineData = rawData.map((d) => ({
-            time: d.date.split('T')[0] as Time,
+            time: toTime(d.date),
             value: d.close,
           }));
         }
       }
 
-      let series = seriesRef.current.get(stock.symbol);
-      if (!series) {
-        series = chart.addLineSeries({
-          color: stock.color,
-          lineWidth: 2,
-          title: stock.symbol,
-          priceFormat: normalize
-            ? { type: 'custom', formatter: (v: number) => v.toFixed(2) + '%' }
-            : mode === 'marketcap'
-            ? { type: 'custom', formatter: (v: number) => '$' + v.toFixed(1) + 'B' }
-            : { type: 'price', precision: 2, minMove: 0.01 },
-        });
-        seriesRef.current.set(stock.symbol, series);
-      } else {
-        series.applyOptions({
-          color: stock.color,
-          priceFormat: normalize
-            ? { type: 'custom', formatter: (v: number) => v.toFixed(2) + '%' }
-            : mode === 'marketcap'
-            ? { type: 'custom', formatter: (v: number) => '$' + v.toFixed(1) + 'B' }
-            : { type: 'price', precision: 2, minMove: 0.01 },
-        });
-      }
-
+      const series = chart.addLineSeries({
+        color: stock.color,
+        lineWidth: 2,
+        title: stock.symbol,
+        priceFormat: normalize
+          ? { type: 'custom', formatter: (v: number) => v.toFixed(2) + '%' }
+          : mode === 'marketcap'
+          ? { type: 'custom', formatter: (v: number) => '$' + v.toFixed(1) + 'B' }
+          : { type: 'price', precision: 2, minMove: 0.01 },
+      });
+      seriesRef.current.set(stock.symbol, series);
       series.setData(lineData);
     });
 
     chart.timeScale().fitContent();
-  }, [dataCache, stocks, mode, normalized]);
+  }, [dataCache, stocks, mode, normalized, range]);
 
   return (
     <div className="relative">
