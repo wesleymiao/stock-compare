@@ -153,17 +153,25 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
       }
 
       const isBenchmark = stock.isBenchmark === true;
+      const useSeparateScale = isBenchmark && !normalize;
       const series = chart.addLineSeries({
         color: stock.color,
         lineWidth: 2,
         lineStyle: isBenchmark ? LineStyle.Dashed : LineStyle.Solid,
         title: stock.symbol,
+        priceScaleId: useSeparateScale ? 'benchmark' : 'right',
         priceFormat: normalize
           ? { type: 'custom', formatter: (v: number) => v.toFixed(2) + '%' }
           : mode === 'marketcap'
           ? { type: 'custom', formatter: (v: number) => '$' + v.toFixed(1) + 'B' }
           : { type: 'price', precision: 2, minMove: 0.01 },
       });
+      if (useSeparateScale) {
+        series.priceScale().applyOptions({
+          scaleMargins: { top: 0.05, bottom: 0.05 },
+          visible: false,
+        });
+      }
       seriesRef.current.set(stock.symbol, series);
       series.setData(lineData);
     });
