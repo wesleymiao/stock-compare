@@ -168,6 +168,21 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
       series.setData(lineData);
     });
 
+    // Add prominent 0% baseline in normalized mode
+    if (normalize) {
+      const firstSeries = seriesRef.current.values().next().value;
+      if (firstSeries) {
+        firstSeries.createPriceLine({
+          price: 0,
+          color: '#94a3b8',
+          lineWidth: 1,
+          lineStyle: LineStyle.Solid,
+          axisLabelVisible: true,
+          title: '0%',
+        });
+      }
+    }
+
     chart.timeScale().fitContent();
   }, [dataCache, stocks, mode, normalized, range]);
 
