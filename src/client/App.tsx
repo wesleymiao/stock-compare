@@ -359,7 +359,7 @@ export default function App() {
               border: `1px ${s.isBenchmark ? 'dashed' : 'solid'} ${s.color}`,
             }}
           >
-            {s.isBenchmark ? `📊 ${s.symbol}` : s.symbol}
+            {s.isBenchmark ? `📊 ${s.name}` : s.name}
             <button
               onClick={() => removeStock(s.symbol)}
               className="ml-1 hover:opacity-70 text-lg leading-none"

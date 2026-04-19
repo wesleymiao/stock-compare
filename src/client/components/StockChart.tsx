@@ -19,7 +19,7 @@ interface StockData {
 
 interface TooltipData {
   time: string;
-  items: { symbol: string; color: string; value: string }[];
+  items: { symbol: string; name: string; color: string; value: string }[];
 }
 
 export default function StockChart({ stocks, range, mode, normalized }: Props) {
@@ -84,7 +84,7 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
           } else {
             formatted = '$' + (data.value as number).toFixed(2);
           }
-          items.push({ symbol, color, value: formatted });
+          items.push({ symbol, name: stock?.name || symbol, color, value: formatted });
         }
       });
 
@@ -146,7 +146,7 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
           } else {
             formatted = '$' + (data.value as number).toFixed(2);
           }
-          items.push({ symbol, color, value: formatted });
+          items.push({ symbol, name: stock?.name || symbol, color, value: formatted });
         }
       });
 
@@ -257,7 +257,7 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
         color: stock.color,
         lineWidth: 2,
         lineStyle: isBenchmark ? LineStyle.Dashed : LineStyle.Solid,
-        title: stock.symbol,
+        title: stock.name,
         priceScaleId: useSeparateScale ? 'benchmark' : 'right',
         priceFormat: normalize
           ? { type: 'custom', formatter: (v: number) => v.toFixed(2) + '%' }
@@ -345,7 +345,7 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
                     className="inline-block w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-slate-300">{item.symbol}</span>
+                  <span className="text-slate-300">{item.name}</span>
                 </div>
                 <span className="font-mono text-white">{item.value}</span>
               </div>
