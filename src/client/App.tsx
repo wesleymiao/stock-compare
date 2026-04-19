@@ -61,6 +61,22 @@ const DEFAULT_LISTS: SavedList[] = [
       { symbol: 'LI', name: 'Li Auto', color: COLORS[6] },
     ],
   },
+  {
+    id: 'holdings',
+    name: '持仓股',
+    stocks: [
+      { symbol: '000300.SS', name: '沪深300', color: '#ffffff', isBenchmark: true },
+      { symbol: '002410.SZ', name: '广联达', color: COLORS[0] },
+      { symbol: '159609.SZ', name: '科创芯片ETF', color: COLORS[1] },
+      { symbol: '513180.SS', name: '恒生科技ETF', color: COLORS[2] },
+      { symbol: '512400.SS', name: '有色金属ETF', color: COLORS[3] },
+      { symbol: '518880.SS', name: '黄金ETF', color: COLORS[4] },
+      { symbol: '588000.SS', name: '科创50ETF', color: COLORS[5] },
+      { symbol: '515030.SS', name: '新能源车ETF', color: COLORS[6] },
+      { symbol: '159755.SZ', name: '电池ETF', color: COLORS[7 % COLORS.length] },
+      { symbol: '159992.SZ', name: '创新药ETF', color: '#6366f1' },
+    ],
+  },
 ];
 
 const STORAGE_KEY = 'stock-compare-saved-lists';
