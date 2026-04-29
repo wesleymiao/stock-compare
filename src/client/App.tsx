@@ -62,6 +62,20 @@ const DEFAULT_LISTS: SavedList[] = [
     ],
   },
   {
+    id: 'popular-etf',
+    name: '热门美股ETF',
+    stocks: [
+      { symbol: '^GSPC', name: 'S&P 500', color: '#ffffff', isBenchmark: true },
+      { symbol: 'VOO', name: 'Vanguard S&P 500', color: COLORS[0] },
+      { symbol: 'QQQ', name: 'Invesco QQQ', color: COLORS[1] },
+      { symbol: 'SOXX', name: 'iShares 半导体', color: COLORS[2] },
+      { symbol: 'SCHD', name: 'Schwab 高股息', color: COLORS[3] },
+      { symbol: 'VTI', name: 'Vanguard 全美股', color: COLORS[4] },
+      { symbol: 'ARKK', name: 'ARK Innovation', color: COLORS[5] },
+      { symbol: 'XLF', name: 'SPDR 金融', color: COLORS[6] },
+    ],
+  },
+  {
     id: 'dca',
     name: '定投组合',
     stocks: [
