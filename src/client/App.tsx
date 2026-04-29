@@ -62,6 +62,15 @@ const DEFAULT_LISTS: SavedList[] = [
     ],
   },
   {
+    id: 'dca',
+    name: '定投组合',
+    stocks: [
+      { symbol: '^GSPC', name: 'S&P 500', color: '#ffffff', isBenchmark: true },
+      { symbol: 'VOO', name: 'Vanguard S&P 500', color: COLORS[0] },
+      { symbol: 'QQQM', name: 'Invesco Nasdaq 100', color: COLORS[1] },
+    ],
+  },
+  {
     id: 'holdings',
     name: '持仓股',
     stocks: [
