@@ -26,7 +26,6 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map());
-  const volumeSeriesRef = useRef<Map<string, ISeriesApi<'Histogram'>>>(new Map());
   const [dataCache, setDataCache] = useState<Map<string, StockData>>(new Map());
   const [loading, setLoading] = useState(false);
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
@@ -114,7 +113,6 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
       chart.remove();
       chartRef.current = null;
       seriesRef.current.clear();
-      volumeSeriesRef.current.clear();
     };
   }, []);
 
@@ -200,10 +198,6 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
       chart.removeSeries(series);
     });
     seriesRef.current.clear();
-    volumeSeriesRef.current.forEach((series) => {
-      chart.removeSeries(series);
-    });
-    volumeSeriesRef.current.clear();
 
     const normalize = normalized;
 
@@ -273,26 +267,6 @@ export default function StockChart({ stocks, range, mode, normalized }: Props) {
       }
       seriesRef.current.set(stock.symbol, series);
       series.setData(lineData);
-
-      // Add volume histogram (skip for benchmarks like ^GSPC which have no meaningful volume)
-      if (!isBenchmark && rawData[0]?.volume > 0) {
-        const volumeData = rawData.map((d) => ({
-          time: toTime(d.date),
-          value: d.volume,
-          color: stock.color + '30',
-        }));
-
-        const volumeSeries = chart.addHistogramSeries({
-          priceFormat: { type: 'volume' },
-          priceScaleId: 'volume',
-        });
-        volumeSeries.priceScale().applyOptions({
-          scaleMargins: { top: 0.85, bottom: 0 },
-          visible: false,
-        });
-        volumeSeries.setData(volumeData as any);
-        volumeSeriesRef.current.set(stock.symbol, volumeSeries);
-      }
     });
 
     // Add prominent 0% baseline in normalized mode
